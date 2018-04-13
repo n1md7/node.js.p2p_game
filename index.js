@@ -89,6 +89,34 @@ io.on('connection', function(socket){
 	});
 
 
+	/* let user to join existing table*/
+	socket.on('lemme_join', function(msg){
+		var regular_dude = this.id;
+		con.query("UPDATE tables SET user_token = ? WHERE id = ?", (new Array(regular_dude, msg.table_id)), function(err, result){
+			if (err) throw err;
+			io.sockets.in(regular_dude).emit('game_started', 'dude game started');
+			io.sockets.in(msg.user_token).emit('game_started', 'dude game started');
+		});
+	});
+
+
+	/* here should be logint of playing*/
+	socket.on('move', function(msg){
+		// es arafers ar shveba jer arseti saxis data unda shevinaxo bazashi mere
+		//  da eg data unda daaapdeitdes drodadro
+		//  tamasis data ra
+		var data = {
+			adminMove: true,
+			gameTable: [[0,0,0],
+						[0,0,0],
+						[0,0,0]],
+			score: {
+				admin: 0,
+				rival: 0
+			}
+		}
+	});
+
 
 
   /* on exchange main game data  */

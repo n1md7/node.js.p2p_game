@@ -57,7 +57,7 @@
 <script>
 $(document).ready(function(){
   $('.join-server').click(function(){
-    $(this).html('Update list')
+    $(this).html('Refresh list')
     $('.online-tables').removeClass('hidden')
   })
 
@@ -72,7 +72,7 @@ $(document).ready(function(){
         $('.button-container').addClass('hidden')
         $('.server-action-container').removeClass('hidden')
         var socket = io();
-        console.log(socket)
+        // console.log(socket)
         if(undefined !== socket){
           $('.server-status').html('Status: <span class="badge badge-success">Connected</span>')
           // everything is OKay
@@ -103,12 +103,21 @@ $(document).ready(function(){
 
           socket.on('dude_take_your_tables', function(msg){
             Render.tables(JSON.parse(msg))
-            console.log(msg)
+            /*after rendering bind events*/
+            $('.join-now').click(function(){
+              socket.emit('lemme_join', {
+                'table_id': $(this).data('id'),
+                'user_token': $(this).data('token')
+              });
+            })  
+            // console.log(msg)
           });
 
-          socket.on('opponent_showed_up', function(msg){
-            swal.close()
-          });
+          socket.on('game_started', function(msg){
+            swal.getState().isOpen == true?
+            swal.close(): ''
+            console.log(' game started')
+          })
 
           /*generate player*/
           var player = genPlayer($('.player-name').val())
@@ -169,10 +178,11 @@ $(document).ready(function(){
               <th scope="row">${e.id}</th>
               <td>${e.name}</td>
               <td>${e.admin_token}</td>
-              <td><button data-id="${e.id}" data-token="${e.admin_token}" class="btn btn-warning btn-sm float-right">Join Now</button></td>
+              <td><button data-id="${e.id}" data-token="${e.admin_token}" class="btn btn-warning btn-sm float-right join-now">Join Now</button></td>
             </tr> 
           `)
       })
+
     },
     player: function(data){
        if(undefined === $('.player')[0]){
@@ -206,7 +216,7 @@ $(document).ready(function(){
             'text-align':'center',
             'height':'200px',
             'border-radius':"100px",
-            'background': id==e.user_token?'rgba(255,0,0,0.5)':'rgba(0,0,255,5)'
+            'background': id==e.user_token?'rgba(255,0,0,0.5)':'rgba(0,0,255,0.5)'
           }).html(e.name)
         })
        }   
