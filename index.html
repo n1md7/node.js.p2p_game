@@ -1,0 +1,139 @@
+
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO Game</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+    <style>
+    .col-centered{
+        float: none;
+        margin: 0 auto;
+    }
+    </style>
+  </head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+</script>
+      
+<body>
+<div class="container mt-5">
+  <h1 class="text-center mb-4">Welcome to my <code>P2P</code> game</h1>
+  <h3 class="text-center mb-4 server-status">Status: <span class="badge badge-danger">Not connected</span></h3>
+  <div class="col-md-4 col-centered mb-2">
+    <input type="text" class="form-control player-name" placeholder="Give me your name" autofocus="on"> 
+  </div>
+  <div class="col-md-4 col-centered text-center">
+    <input type="button" class="btn btn-primary connect-io" value="Connect to a server"> 
+  </div>
+</div>
+
+
+<script>
+  $(document).ready(function(){
+    $('.connect-io').click(function(){
+      if($('.player-name').val().length !== 0){
+        var socket = io();
+        console.log(socket)
+        if(undefined !== socket){
+          $('.server-status').html('Status: <span class="badge badge-success">Connected</span>')
+          // everything is OKay
+          /*generate player*/
+          var player = genPlayer($('.player-name').val())
+          Render.player(player)
+          socket.emit('my_data', JSON.stringify(player));
+    
+          $(document).keydown(function(e){
+            $('.player').remove()
+            e = e || window.event;
+            if (e.keyCode == '38') {
+                // up arrow
+                player.top-=10
+            }
+            else if (e.keyCode == '40') {
+              player.top+=10
+                // down arrow
+            }
+            else if (e.keyCode == '37') {
+                player.left-=10
+               // left arrow
+            }
+            else if (e.keyCode == '39') {
+                player.left+=10
+               // right arrow
+            }
+            // Render.player(player)
+            socket.emit('my_data', JSON.stringify(player));
+    
+          })
+
+          socket.on('other_players', function(msg){
+            var respJson = JSON.parse(msg)
+            console.log(socket)
+            Render.allPlayers(respJson, socket.id)
+          });
+        }
+      }else{
+        alert('Please type anything. Don\'t leave it an empty :(')
+        $('.player-name').trigger('focus')       
+      }
+    })
+  })
+
+
+  var Operations = {
+    rnd: function(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min
+    }
+  }
+
+  var Render = {
+    player: function(data){
+       if(undefined === $('.player')[0]){
+        $('body').append('<div class="player"></div>')
+       }   
+        $('.player').css({
+          'position':'absolute',
+          'left': `${data.left}px`,
+          'top': `${data.top}px`,
+          'width':'200px',
+          'height':'200px',
+          'line-height':'200px',
+          'text-align':'center',
+          'border-radius':"100px",
+          'background': 'rgba(255,0,0,0.5)'
+        }).html(data.name)
+    },
+    allPlayers: function(data, id){
+       if(undefined !== data){
+        data.forEach(function(e){
+          if($(`.${e.user_token}`)[0] === undefined){
+            $('body').append(`<div class="${e.user_token}"></div>`)
+          }
+          var game_data = JSON.parse(e.game_data)
+          $(`.${e.user_token}`).css({
+            'position':'absolute',
+            'left': `${game_data.left}px`,
+            'top': `${game_data.top}px`,
+            'width':'200px',
+            'line-height':'200px',
+            'text-align':'center',
+            'height':'200px',
+            'border-radius':"100px",
+            'background': id==e.user_token?'rgba(255,0,0,0.5)':'rgba(0,0,255,5)'
+          }).html(e.name)
+        })
+       }   
+    }
+  }
+
+  function genPlayer(name){
+    return {
+      left : Operations.rnd(0,window.innerWidth),
+      top  : Operations.rnd(0,window.innerHeight),
+      name: name
+    }
+  }
+</script>
+</body>
+</html>
