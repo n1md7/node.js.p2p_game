@@ -39,20 +39,59 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-io.on('connection', function(socket){
-  console.log('a user connected');
+/*app.get('/user/:id', function(req, res) {
+    var id = req.params.id;
+    console.log(id);
+});
+*/
 
-  for ( var _id in socket.client.sockets){
+io.on('connection', function(socket){
+ 	console.log('a user connected');
+
+	/* save all conected clients token in DB */
+	for ( var _id in socket.client.sockets){
 		var sql = "INSERT INTO players (user_token, name, game_data) VALUES ?";
-		var values = [[_id, 'defname', 'blaaa']];
+		var values = [[_id, 'defname', '{"left":372,"top":104}']];
 		con.query(sql, [values], function (err, result) {
 		if (err) throw err;
 			// console.log("record created");
 		});
 
 	  console.log(_id);
-  }
+	}
 
+	/* let user to create a table */
+	socket.on('create_table', function(msg){
+		/* es mere magram iuzeric aq unda davaregistriro mere da zeda ar minda */
+		var creator_id = this.id;
+		con.query("INSERT INTO tables (admin_token) VALUES (?)", (new Array(creator_id)), function(err, result){
+			if (err) throw err;
+			console.log("Table created. Creator is " + creator_id);
+			io.sockets.in(creator_id).emit('create_table_response', 'what is going on, party people?');
+			// io.sockets.socket(creator_id).emit(msg);
+		});
+		// console.log(msg.data);
+		// console.log(this.id);
+	});
+
+
+	/* let give a chance to user to join created tables */
+	socket.on('show_me_tables', function(msg){
+		/* es mere magram iuzeric aq unda davaregistriro mere da zeda ar minda */
+		var regular_dude = this.id;
+		con.query("SELECT tables.id, tables.admin_token, tables.date_time, players.name FROM tables JOIN players ON tables.admin_token = players.user_token", function(err, result){
+			if (err) throw err;
+			// console.log(result);
+			io.sockets.in(regular_dude).emit('dude_take_your_tables', JSON.stringify(result));
+		});
+		// console.log(msg.data);
+		// console.log(this.id);
+	});
+
+
+
+
+  /* on exchange main game data  */
   socket.on('my_data', function(msg){
   	var msgJson = JSON.parse(msg);
   	console.log(msg);

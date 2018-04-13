@@ -9,35 +9,107 @@
         float: none;
         margin: 0 auto;
     }
+    .hidden{
+      display: none;
+    }
     </style>
   </head>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-<script>
-</script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
       
 <body>
+<script>
+</script>
 <div class="container mt-5">
   <h1 class="text-center mb-4">Welcome to my <code>P2P</code> game</h1>
   <h3 class="text-center mb-4 server-status">Status: <span class="badge badge-danger">Not connected</span></h3>
-  <div class="col-md-4 col-centered mb-2">
+  <div class="col-md-4 col-centered mb-2 name-container">
     <input type="text" class="form-control player-name" placeholder="Give me your name" autofocus="on"> 
   </div>
-  <div class="col-md-4 col-centered text-center">
+  <div class="col-md-4 col-centered text-center button-container">
     <input type="button" class="btn btn-primary connect-io" value="Connect to a server"> 
+  </div>
+
+  <div class="col-md-6 col-centered mt-5 text-center hidden server-action-container">
+    <button class="btn btn-warning join-server">JOIN </button>
+    <button class="btn btn-danger create-server">CREATE </button>
+  </div>
+
+  <div class="col-md-6 col-centered mt-5 hidden online-tables">
+    <table class="table table-sm table-hover table-stripped">
+    <thead>
+      <tr>
+        <th scope="col">#ID</th>
+        <th scope="col">User</th>
+        <th scope="col">Game Token</th>
+        <th scope="col"><span class="float-right pr-3">Action</span></th>
+      </tr>
+    </thead>
+    <tbody class="createTablesHere">
+      
+    </tbody>
+  </table>
   </div>
 </div>
 
 
 <script>
+$(document).ready(function(){
+  $('.join-server').click(function(){
+    $(this).html('Update list')
+    $('.online-tables').removeClass('hidden')
+  })
+
+})
+
+
+
   $(document).ready(function(){
     $('.connect-io').click(function(){
       if($('.player-name').val().length !== 0){
+        $('.name-container').addClass('hidden')
+        $('.button-container').addClass('hidden')
+        $('.server-action-container').removeClass('hidden')
         var socket = io();
         console.log(socket)
         if(undefined !== socket){
           $('.server-status').html('Status: <span class="badge badge-success">Connected</span>')
           // everything is OKay
+          
+          $('.create-server').click(function(){
+            socket.emit('create_table', {
+              'data':'I passed this data'
+            });
+          });
+
+          $('.join-server').click(function(){
+            socket.emit('show_me_tables', {
+              'please':'lemme see'
+            });
+          });
+
+          /*message on success table creation*/
+          socket.on('create_table_response', function(msg){
+            swal("Dude, wait here. Now we are looking for your rival...", {
+              button: false,
+              closeOnClickOutside: false,
+              closeOnEsc: false,
+              icon: 'success',
+              title: 'A server has been created'
+            });
+            console.log(msg)
+          });
+
+          socket.on('dude_take_your_tables', function(msg){
+            Render.tables(JSON.parse(msg))
+            console.log(msg)
+          });
+
+          socket.on('opponent_showed_up', function(msg){
+            swal.close()
+          });
+
           /*generate player*/
           var player = genPlayer($('.player-name').val())
           Render.player(player)
@@ -88,6 +160,20 @@
   }
 
   var Render = {
+    tables:function(data){
+      $('.createTablesHere').empty()
+      data.forEach(function(e){
+        $('.createTablesHere')
+          .append(`
+            <tr>
+              <th scope="row">${e.id}</th>
+              <td>${e.name}</td>
+              <td>${e.admin_token}</td>
+              <td><button data-id="${e.id}" data-token="${e.admin_token}" class="btn btn-warning btn-sm float-right">Join Now</button></td>
+            </tr> 
+          `)
+      })
+    },
     player: function(data){
        if(undefined === $('.player')[0]){
         $('body').append('<div class="player"></div>')
