@@ -79,7 +79,7 @@ io.on('connection', function(socket){
 	socket.on('show_me_tables', function(msg){
 		/* es mere magram iuzeric aq unda davaregistriro mere da zeda ar minda */
 		var regular_dude = this.id;
-		con.query("SELECT tables.id, tables.admin_token, tables.date_time, players.name FROM tables JOIN players ON tables.admin_token = players.user_token", function(err, result){
+		con.query("SELECT tables.id, tables.admin_token, tables.date_time, players.name FROM tables JOIN players ON tables.admin_token = players.user_token WHERE tables.user_token IS NOT NULL", function(err, result){
 			if (err) throw err;
 			// console.log(result);
 			io.sockets.in(regular_dude).emit('dude_take_your_tables', JSON.stringify(result));
@@ -91,6 +91,12 @@ io.on('connection', function(socket){
 
 	/* let user to join existing table*/
 	socket.on('lemme_join', function(msg){
+		/*con.query("SELECT tables.id, tables.admin_token, tables.date_time, players.name FROM tables JOIN players ON tables.admin_token = players.user_token WHERE tables.user_token IS NOT NULL", function(err, result){
+			if (err) throw err;
+			io.emit('dude_take_your_tables', JSON.stringify(result));
+		});*/
+
+
 		var regular_dude = this.id;
 		con.query("UPDATE tables SET user_token = ? WHERE id = ?", (new Array(regular_dude, msg.table_id)), function(err, result){
 			if (err) throw err;

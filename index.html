@@ -110,7 +110,7 @@ $(document).ready(function(){
                 'user_token': $(this).data('token')
               });
             })  
-            // console.log(msg)
+            console.log(msg)
           });
 
           socket.on('game_started', function(msg){
@@ -171,6 +171,15 @@ $(document).ready(function(){
   var Render = {
     tables:function(data){
       $('.createTablesHere').empty()
+      if(data.length == 0){
+        $('.createTablesHere').append(
+          `
+          <tr>
+            <td colspan="4" class="text-center">No active tables</td>
+          </tr>
+          `
+          )
+      }
       data.forEach(function(e){
         $('.createTablesHere')
           .append(`
